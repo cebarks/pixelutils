@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/cebarks/pixelutils/gui"
 	"github.com/dusk125/pixelutils"
-	"github.com/dusk125/pixelutils/gui"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 )
