@@ -1,0 +1,67 @@
+# https://taskfile.dev
+version: '3'
+
+vars:
+  WSL:
+    sh: |
+        if [ `uname -s` = "Linux" ]; then
+          if grep -q "microsoft" <<< `uname -r`; then
+            echo true
+          fi
+        else
+          echo false
+        fi
+  EXE: bin/example{{if eq .WSL "true"}}.exe{{else}}{{exeExt}}{{end}}
+
+  BUILD_CMD: go build -v  -o {{.EXE}} example.go
+
+tasks:
+  default:
+    cmds:
+      - task -l
+    silent: true
+
+  run:
+    desc: run the example
+    deps: [build]
+    cmds:
+      -  ./{{.EXE}}
+
+  clean:
+    desc: clean any log and build files
+    cmds:
+      - rm -rv bin/
+    preconditions:
+      - test -d bin
+
+  test:
+    desc: run all tests
+    cmds:
+      - go test ./...
+
+  testv:
+    desc: run all tests verbosely (with coverage)
+    cmds:
+      - go test ./... -cover -covermode atomic -v
+
+  todo:
+    desc: find all //TODO comments in the repo
+    cmds:
+      - grep -nr --exclude="Taskfile.yml" --exclude-dir=".git" "//TODO" . 
+    
+  build:
+    desc: build executable to {{.EXE}}
+    cmds:
+      - task: build-{{ if eq .WSL "true" }}wsl{{else}}all{{end}}
+    sources:
+      - ./**/*.go
+    generates:
+      - ./{{.EXE}}
+
+  build-all:
+    cmds:
+      - CGO_ENABLED=1 {{.BUILD_CMD}}
+
+  build-wsl:
+    cmds:
+      - CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH={{ARCH}} CGO_ENABLED=1 {{.BUILD_CMD}}
